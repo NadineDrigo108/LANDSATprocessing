@@ -8,6 +8,7 @@ library(gdalUtils)
 library(rgdal)
 library(raster)
 library(sp)
+library(grid)
 
 
 ###read raster scene from L5 169060 year 2008
@@ -111,70 +112,122 @@ MaskCloud = function(folder){
   image_dir = paste0(getwd(),"/", folder)
   setwd(image_dir)
   lf = list.files(path = ".", pattern = "band")
-  lf[-1]
+  #lf = lf[-1]
   mf = list.files(path = ".", patter = "pixel")
   image_stack = stack(paste0(image_dir, "/", lf))
   image_mask_f = raster(mf)
   RecMatC = matrix(c(72,NA,136,NA,96,NA,112,NA,160,NA,176,NA,224,NA), ncol = 2, byrow = T)
   RecMatO = matrix(c(3,255,0), ncol = 3, byrow = T)
+  NAcleanMat = matrix(c(-Inf,0, NA,10000, Inf, NA), ncol = 3, byrow = T)
   image_mask = reclassify(reclassify(image_mask_f, rcl = RecMatC), rcl = RecMatO)
   name = substr(lf[1],1,44)
   clean_image_name = paste0(name, "CloudFreeStack.tif")
-  clean_image = mask(image_stack, image_mask, maskvalue = 2, updatevalue=NA, overwrite = TRUE)
-  writeRaster(clean_image,filename = clean_image_name, "GTiff", overwtire = T)
+  clean_image = mask(image_stack, image_mask, overwrite = TRUE)
+  NAclean_image = reclassify(clean_image, rcl = NAcleanMat)
+  writeRaster(NAclean_image,filename = clean_image_name, "GTiff")
 }
 
-# #.................DEBUG..............
+# # # # # #.................DEBUG..............
 # dati_wd = "/whrc/biomass/ndrigo/dati"
 # setwd(dati_wd)
 # image_dir = paste0(getwd(),"/", J01)
 # setwd(image_dir)
 # lf = list.files(path = ".", pattern = "band")
-# lf[-1]
+# #lf = lf[-1]
 # mf = list.files(path = ".", patter = "pixel")
 # image_stack = stack(paste0(image_dir, "/", lf))
+# 
+# hist(image_stack,1)
+# plot(image_stack,1)
+# 
 # image_mask_f = raster(mf)
 # RecMatC = matrix(c(72,NA,136,NA,96,NA,112,NA,160,NA,176,NA,224,NA), ncol = 2, byrow = T)
 # RecMatO = matrix(c(3,255,0), ncol = 3, byrow = T)
+# NAcleanMat = matrix(c(-Inf,-20000, NA,20000, Inf, NA), ncol = 3, byrow = T)
 # image_mask = reclassify(reclassify(image_mask_f, rcl = RecMatC), rcl = RecMatO)
+# 
+# plot(image_mask_f)
+# plot(image_mask)
+# click(image_mask)
+# 
 # name = substr(lf[1],1,44)
 # clean_image_name = paste0(name, "CloudFreeStack.tif")
-# clean_image = mask(image_stack, image_mask, maskvalue = 2, updatevalue=NA, overwrite = TRUE)
-# writeRaster(clean_image,filename = clean_image_name, "GTiff", overwtire = T)
+# clean_image = mask(image_stack, image_mask, overwrite = TRUE)
+# NAclean_image = reclassify(clean_image, rcl = NAcleanMat)
+# plot(NAclean_image,1)
+# click(NAclean_image)
+# NAclean_image
+# writeRaster(NAclean_image,filename = clean_image_name, "GTiff", overwrite = T)
 
-#~~~~~~~~~~~~~~~~   RUN THE LOVELY FUNCTION ~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~...FIND WHY THERE ARE HIGH VALUES...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+J01test = stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
+plot(J01test,1)
+click(J01test,1)
+J01test_band1 = raster(J01test,1)
+J01test_band1_20000 = raster(J01test,1)
+
+#<18000
+J01test_band1_20000[J01test_band1_20000 > 15000] <- NA #ADD TO FUNCTION
+plot(J01test_band1_20000)
+newimg=mask(J01test_band1,J01test_band1_20000)
+
+J01_band1_points = rasterToPoints(J01test_band1_20000, spatial=T)
+J01test_band1
+str(J01test_band1_20000)
+str(J01_band1_points)
+plot(J01test_band1);par(new = TRUE)
+plot(J01_band1_points)
+
+#
+J01test_band1_20000[J01test_band1_20000< 19000] <- NA
+J01_band1_points = rasterToPoints(J01test_band1_20000)
+J01test_band1
+str(J01test_band1_20000)
+str(J01_band1_points)
+plot(J01test_band1);par(new = TRUE)
+plot(J01_band1_points)
+
+
+ #~~~~~~~~~~~~~~~~   RUN THE LOVELY FUNCTION ~~~~~~~~~~~~~
 # LANDSAT scenes folders name
-J01 = "LT051690602008060101T1-SC20180509120607"
-S05 = "LT051690602008090501T1-SC20180509120647"
-S21 = "LT051690602008092101T1-SC20180509120522"
-MaskCloud(J01)
-MaskCloud(S05)
-MaskCloud(S21)
+J01_folder = "LT051690602008060101T1-SC20180509120607"
+S05_folder = "LT051690602008090501T1-SC20180509120647"
+S21_folder = "LT051690602008092101T1-SC20180509120522"
+MaskCloud(J01_folder)
+MaskCloud(S05_folder)
+MaskCloud(S21_folder)
 
 # #output check
-# setwd(J01)
-# J01stack_check <- stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
-# setwd(dati_wd)
-# setwd(S05)
-# S05Stack_check = stack("LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif")
-# setwd(dati_wd)
-# setwd(S21)
-# S21Stack_check = stack("LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif")
-# 
-# L52008 = merge(J01stack_check,S05Stack_check,S21Stack_check)
-# J01stack_check
-# S05Stack_check
-# S21Stack_check
+setwd(dati_wd)
+setwd(J01)
+J01 <- stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
+
+setwd(dati_wd)
+setwd(S05)
+S05 = stack("LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif")
+
+setwd(dati_wd)
+setwd(S21)
+S21 = stack("LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif")
 
 
 
+L52008stack = stack(J01,S05,S21)
+
+#FOR THE MERGE ~~~~~~~~~~~~~~~~~~~~ACTUALLY WE CAN DO IT WITH THE MERGE FUNCTION OF R OR DIRECTLY TRANSFORM IT INTO A STACK
+# FROM THE STACK WE SHOULD BE ABLE TO PLOT THE REFLECTANCE AT THE DIFFERENT DATES
+setwd(dati_wd)
 J01 = "LT051690602008060101T1-SC20180509120607/LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif"
 S05 = "LT051690602008090501T1-SC20180509120647/LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif"
 S21 = "LT051690602008092101T1-SC20180509120522/LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif"
 
-
 #merge stacks calling the terminal
-system(paste0("gdal_merge.py ",J01," ",S05, " ", S21, " -o gdalTest/J01_S05_S21.tif -separate"))
+#system(paste0("gdal_merge.py ",J01," ",S05, " ", S21, " -o gdalTest/J01_S05_S21.tif -separate"))
+system(paste0("gdal_merge.py ",J01," ",S05, " ", S21, " -o gdalTest/L52008_J01_S05_S21.tif -separate"))
+system(paste0("gdal_merge.py -o gdalTest/L52008_J01_S05_S21.tif -separate ",J01," ",S05, " ", S21))
+# -separate = put all layer separately
+#
 
 
 #read merged file...stack?
@@ -184,23 +237,27 @@ setwd("gdalTest")
 J01S05S21 = stack("J01_S05_S21.tif") #18 bands because also the blue band is consider
 J01S05S21
 
+L52008 = stack("L52008_J01_S05_S21.tif")
+L52008
+
 #random sample
 #generate 10 random numbers
 #extract for each band
-
 x = c(1:55505931)
-
 samplex = sample(x, 10)
-extractx = extract(J01S05S21,samplex)
-v = c(extractx$J01_S05_S21.1[1],extractx$J01_S05_S21.7[1], extractx$J01_S05_S21.13[1])
+extractx = as.data.frame(extract(L52008,samplex))
+#extractx = as.data.frame(extractx)
+extractx
+v = c(extractx$J01_S05_S21_18bands.1[1],extractx$J01_S05_S21_18bands.7[1], extractx$J01_S05_S21_18bands.13[1])
 plot(c(1:3), v)
 
 
-extractx = as.data.frame(extractx)
 
-plot(J01S05S21,1)
+
+plot(,1)
 click(J01S05S21,1)
 
 
+#
 
 
