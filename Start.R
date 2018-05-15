@@ -1,3 +1,4 @@
+# 
 dati_wd = "/whrc/biomass/ndrigo/dati"
 setwd(dati_wd)
 
@@ -159,61 +160,29 @@ MaskCloud = function(folder){
 # NAclean_image
 # writeRaster(NAclean_image,filename = clean_image_name, "GTiff", overwrite = T)
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~...FIND WHY THERE ARE HIGH VALUES...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-J01test = stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
-plot(J01test,1)
-click(J01test,1)
-J01test_band1 = raster(J01test,1)
-J01test_band1_20000 = raster(J01test,1)
-
-#<18000
-J01test_band1_20000[J01test_band1_20000 > 15000] <- NA #ADD TO FUNCTION
-plot(J01test_band1_20000)
-newimg=mask(J01test_band1,J01test_band1_20000)
-
-J01_band1_points = rasterToPoints(J01test_band1_20000, spatial=T)
-J01test_band1
-str(J01test_band1_20000)
-str(J01_band1_points)
-plot(J01test_band1);par(new = TRUE)
-plot(J01_band1_points)
-
-#
-J01test_band1_20000[J01test_band1_20000< 19000] <- NA
-J01_band1_points = rasterToPoints(J01test_band1_20000)
-J01test_band1
-str(J01test_band1_20000)
-str(J01_band1_points)
-plot(J01test_band1);par(new = TRUE)
-plot(J01_band1_points)
-
-
  #~~~~~~~~~~~~~~~~   RUN THE LOVELY FUNCTION ~~~~~~~~~~~~~
 # LANDSAT scenes folders name
 J01_folder = "LT051690602008060101T1-SC20180509120607"
 S05_folder = "LT051690602008090501T1-SC20180509120647"
 S21_folder = "LT051690602008092101T1-SC20180509120522"
-MaskCloud(J01_folder)
-MaskCloud(S05_folder)
-MaskCloud(S21_folder)
+# MaskCloud(J01_folder)
+# MaskCloud(S05_folder)
+# MaskCloud(S21_folder)
 
 # #output check
 setwd(dati_wd)
-setwd(J01)
+setwd(J01_folder)
 J01 <- stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
 
 setwd(dati_wd)
-setwd(S05)
+setwd(S05_folder)
 S05 = stack("LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif")
 
 setwd(dati_wd)
-setwd(S21)
+setwd(S21_folder)
 S21 = stack("LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif")
 
 
-
-L52008stack = stack(J01,S05,S21)
 
 #FOR THE MERGE ~~~~~~~~~~~~~~~~~~~~ACTUALLY WE CAN DO IT WITH THE MERGE FUNCTION OF R OR DIRECTLY TRANSFORM IT INTO A STACK
 # FROM THE STACK WE SHOULD BE ABLE TO PLOT THE REFLECTANCE AT THE DIFFERENT DATES
@@ -237,27 +206,30 @@ setwd("gdalTest")
 J01S05S21 = stack("J01_S05_S21.tif") #18 bands because also the blue band is consider
 J01S05S21
 
-L52008 = stack("L52008_J01_S05_S21.tif")
-L52008
 
-#random sample
+#random sample...this should be to set 
 #generate 10 random numbers
 #extract for each band
 x = c(1:55505931)
 samplex = sample(x, 10)
 extractx = as.data.frame(extract(L52008,samplex))
-#extractx = as.data.frame(extractx)
 extractx
 v = c(extractx$J01_S05_S21_18bands.1[1],extractx$J01_S05_S21_18bands.7[1], extractx$J01_S05_S21_18bands.13[1])
 plot(c(1:3), v)
 
+##~~~~~~~~~~~ SELECT ONLY PIXEL WITH AT LEAST 2 VALUES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+L52008 = "/whrc/biomass/ndrigo/dati/L5169060_2008"
+setwd(L52008)
+filel = list.files(path = ".")
+
+InsifficientData = function(fileList) {
+  
+}
 
 
 
-plot(,1)
-click(J01S05S21,1)
 
 
-#
 
 
