@@ -165,23 +165,26 @@ MaskCloud = function(folder){
 J01_folder = "LT051690602008060101T1-SC20180509120607"
 S05_folder = "LT051690602008090501T1-SC20180509120647"
 S21_folder = "LT051690602008092101T1-SC20180509120522"
-# MaskCloud(J01_folder)
-# MaskCloud(S05_folder)
-# MaskCloud(S21_folder)
+MaskCloud(J01_folder)
+MaskCloud(S05_folder)
+MaskCloud(S21_folder)
 
 # #output check
 setwd(dati_wd)
 setwd(J01_folder)
 J01 <- stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
+J01
+plot(J01,1)
+click(j01,1)
 
 setwd(dati_wd)
 setwd(S05_folder)
 S05 = stack("LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif")
-
+S05
 setwd(dati_wd)
 setwd(S21_folder)
 S21 = stack("LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif")
-
+S21
 
 
 #FOR THE MERGE ~~~~~~~~~~~~~~~~~~~~ACTUALLY WE CAN DO IT WITH THE MERGE FUNCTION OF R OR DIRECTLY TRANSFORM IT INTO A STACK
@@ -207,15 +210,15 @@ J01S05S21 = stack("J01_S05_S21.tif") #18 bands because also the blue band is con
 J01S05S21
 
 
-#random sample...this should be to set 
-#generate 10 random numbers
-#extract for each band
-x = c(1:55505931)
-samplex = sample(x, 10)
-extractx = as.data.frame(extract(L52008,samplex))
-extractx
-v = c(extractx$J01_S05_S21_18bands.1[1],extractx$J01_S05_S21_18bands.7[1], extractx$J01_S05_S21_18bands.13[1])
-plot(c(1:3), v)
+# #random sample...this should be to set 
+# #generate 10 random numbers
+# #extract for each band
+# x = c(1:55505931)
+# samplex = sample(x, 10)
+# extractx = as.data.frame(extract(L52008,samplex))
+# extractx
+# v = c(extractx$J01_S05_S21_18bands.1[1],extractx$J01_S05_S21_18bands.7[1], extractx$J01_S05_S21_18bands.13[1])
+# plot(c(1:3), v)
 
 ##~~~~~~~~~~~ SELECT ONLY PIXEL WITH AT LEAST 2 VALUES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -223,9 +226,79 @@ L52008 = "/whrc/biomass/ndrigo/dati/L5169060_2008"
 setwd(L52008)
 filel = list.files(path = ".")
 
-InsifficientData = function(fileList) {
-  
-}
+overlap = raster("Overlappppp.tif")
+
+
+#to create a mask I need 1 layer for each stack
+j01 = stack("LT05_L1TP_169060_20080601_20161031_01_T1_sr_CloudFreeStack.tif")
+j011 = raster(j01,1)
+s05 = stack("LT05_L1TP_169060_20080905_20161029_01_T1_sr_CloudFreeStack.tif")
+s051 = raster(s05,1)
+s21 = stack("LT05_L1TP_169060_20080921_20161029_01_T1_sr_CloudFreeStack.tif")
+s211 = raster(s21,1)
+
+
+# #output check
+setwd(dati_wd)
+setwd(J01_folder)
+J01b1 <- raster("LT05_L1TP_169060_20080601_20161031_01_T1_sr_band1.tif")
+J01b1
+# plot(J01,1)
+# click(j01,1)
+
+setwd(dati_wd)
+setwd(S05_folder)
+S05b1 = raster("LT05_L1TP_169060_20080905_20161029_01_T1_sr_band1.tif")
+S05b1
+setwd(dati_wd)
+setwd(S21_folder)
+S21b1 = raster("LT05_L1TP_169060_20080921_20161029_01_T1_sr_band1.tif")
+S21b1
+
+s = stack(J01b1, S05b1, S21b1)
+
+EX = extent(J01b1)
+
+S05b1ex = setExtent(S05b1, EX, keepres = T)
+S21b1ex = setExtent(S21b1, EX, keepres = T)
+stackk = stack(J01b1, S05b1ex, S21b1ex)
+l = calc(stackk, fun=length)
+#j011_trim = trim(j011, padding = 0, values = NA) # trim is a function that removes the outer rows and colums TOOOOO SLOW
+
+
+
+NAcheckStack1 = raster(L52008stack,1)
+NAcheckStack7 = raster(L52008stack,7)
+NAcheckStack14 = raster(L52008stack,14)
+NAstack = stack(NAcheckStack1, NAcheckStack7, NAcheckStack14)
+
+####### LENGTH  
+l = calc(NAstack, fun=length)
+
+
+stack2008_l = stack2008
+
+s = rowSums(!is.na(getValues(stack2008)))
+
+
+#read merged file...stack?
+getwd()
+setwd(dati_wd)
+setwd("gdalTest")
+L52008stack = stack("L52008_J01_S05_S21.tif") #18 bands because also the blue band is consider
+plot(L52008stack,1)
+click(L52008stack,1)
+
+#this should return me a raster layer with counting the NA values in the stack
+# is an 18 band stack, so it will be multiple of 6
+#if NA values is higher than 6 
+rNA = sum(!is.na(L52008stack)) 
+rNA = raster(rowSums(!is.na(L52008stack)))
+rNA2 = apply(as.array(L52008stack), 1:2, function(x) length(na.omit(x))) 
+rNA3 = stackApply(L52008stack, indices = c(1), function(x)length(na.omit(x)), na.rm = FALSE)
+
+
+
 
 
 
